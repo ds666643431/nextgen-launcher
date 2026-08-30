@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="ActivityTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- For full-screen layout, cutout support -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowFullscreen">true</item>
+        <!-- Launch / splash background (pre-egui) -->
+        <item name="android:windowBackground">@drawable/splash_background</item>
+    </style>
+</resources>

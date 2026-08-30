@@ -1,0 +1,57 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'menu.nextgen.loader'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'menu.nextgen.loader'
+        minSdk 28          // Android 9 (project floor)
+        targetSdk 35
+        versionCode 1
+        versionName '0.1'
+
+        // M1 targets the arm64 Pixel 8. x86_64 (MuMu) can be re-enabled later
+        // by also building that ABI in scripts/build.ps1.
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            // Rust .so is dropped into src/main/jniLibs by cargo-ndk before assemble.
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    ndkVersion '27.0.12077973'
+}
+
+// games-activity:4.4.0 transitively pulls the legacy kotlin-stdlib-jdk8:1.6.21,
+// whose classes now live inside kotlin-stdlib:1.8.22 -> duplicate-class failure.
+// Force all kotlin-stdlib* artifacts to one modern version (jdk7/jdk8 become empty stubs).
+configurations.all {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'org.jetbrains.kotlin' &&
+                details.requested.name.startsWith('kotlin-stdlib')) {
+            details.useVersion '1.9.24'
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    // GameActivity (AGDK) — provides com.google.androidgamesdk.GameActivity used by MainActivity.
+    implementation 'androidx.games:games-activity:4.4.0'
+}

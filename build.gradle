@@ -1,0 +1,6 @@
+// Top-level build file. AGP 8.7.x pairs with the seeded Gradle 8.10 wrapper
+// and stays friendly to the (older) NextGen engine .aar we integrate in M2.
+plugins {
+    id 'com.android.application' version '8.7.3' apply false
+    id 'com.android.library' version '8.7.3' apply false
+}

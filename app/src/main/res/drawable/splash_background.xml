@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launch / splash window background: light blue-white diagonal gradient (matching
+     nextgen1.png) with the NextGEN wordmark centered. Shown until the native egui
+     surface renders. On API 31+ the system SplashScreen overrides this (see values-v31). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="315"
+                android:startColor="#FAFBFD"
+                android:centerColor="#EEF1F6"
+                android:endColor="#E5EBF1" />
+        </shape>
+    </item>
+    <item
+        android:width="240dp"
+        android:height="52dp"
+        android:drawable="@drawable/splash_logo"
+        android:gravity="center" />
+</layer-list>

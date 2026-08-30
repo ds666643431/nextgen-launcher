@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ system SplashScreen: light background (matches nextgen1.png) + the
+         (new) launcher icon. windowBackground still covers the post-splash window until
+         BootstrapActivity swaps to Theme.NextGen. -->
+    <style name="Theme.NextGen.Launch" parent="Theme.NextGen">
+        <item name="android:windowBackground">@drawable/splash</item>
+        <item name="android:windowSplashScreenBackground">#F0F3F7</item>
+    </style>
+</resources>

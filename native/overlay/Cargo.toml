@@ -1,0 +1,27 @@
+[package]
+name = "modmenu"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "modmenu"
+crate-type = ["cdylib"]
+
+[dependencies]
+log = "0.4"
+jni = "0.21"
+chacha20 = "0.9"
+egui = "0.33"
+# GL (egui_glow) render path. wgpu's GLES backend hangs in queue.submit on MuMu's
+# emulated GPU ("Waiting on last submission"); egui_glow does immediate glDraw calls
+# with no fence to stall, and renders fine on emulated GL. glow is re-exported as
+# egui_glow::glow so versions always match.
+egui_glow = { version = "0.33", default-features = false }
+ndk-sys = "0.6"
+libc = "0.2"
+
+[build-dependencies]
+cc = "1"
+
+[profile.release]
+opt-level = "s"

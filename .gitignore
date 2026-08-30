@@ -1,0 +1,71 @@
+# ---------------------------------------------------------------------------
+# nextgenlauncher — Android (Gradle) launcher + Rust/NDK native libs
+# ---------------------------------------------------------------------------
+
+# --- Gradle / Android build output ---
+/build
+**/build/
+.gradle/
+.cxx/
+captures/
+*.apk
+*.aab
+*.ap_
+*.aar
+*.dex
+*.class
+output-metadata.json
+
+# Machine-specific SDK/NDK paths
+local.properties
+
+# --- Rust / cargo ---
+/target
+**/target/
+*.rs.bk
+*.pdb
+
+# --- Native artifacts produced by cargo-ndk (scripts/build.ps1) ---
+app/src/main/jniLibs/
+*.so.d
+
+# --- Signing material / secrets (never commit) ---
+keystore/
+*.jks
+*.keystore
+*.p12
+*.pepk
+keystore.properties
+signing.properties
+google-services.json
+
+# --- Python (scripts/) ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# --- Runtime captures / traces from the device ---
+*.enc
+trace.enc
+shot.jpg
+*.raw.png
+*.hprof
+*.log
+
+# --- IDE / editor ---
+*.iml
+.idea/
+.vscode/
+.fleet/
+*.swp
+
+# --- OS cruft ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- vendor/ : cloned reference engines (NextGEN). Source IS tracked;
+# their build output is caught by the **/build/, .gradle/, *.apk rules above.
+# Keep NextGEN's bundled microG asset, which those rules would otherwise drop.
+!vendor/**/src/main/assets/*.apk

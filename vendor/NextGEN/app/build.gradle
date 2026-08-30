@@ -1,0 +1,74 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.jetbrains.kotlin.android)
+}
+
+android {
+
+    namespace 'menu.nextgen.launchera'
+    compileSdk rootProject.ext.compileSdkVersion
+    ndkVersion = "27.0.12077973"
+    defaultConfig {
+        applicationId "menu.nextgen.launcher"
+        minSdk rootProject.ext.minSdk
+        // targetSdk 28 is deliberate: the proxy layer depends on the pre-29 behaviours
+        // (implicit-intent visibility, package visibility, background-start limits, legacy
+        // storage). Do not raise it without auditing fake/service/*.
+        targetSdk rootProject.ext.targetSdkVersion
+        versionCode rootProject.ext.versionCode
+        versionName rootProject.ext.versionName
+
+        splits {
+            abi {
+                enable true
+                reset()
+
+                include 'armeabi-v7a', "arm64-v8a"
+                universalApk true
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = '21'
+    }
+    packaging {
+        // MUST stay true. NgInjector resolves libmodmenu.so from nativeLibraryDir and loads it
+        // into the guest process; with modern packaging nothing is extracted to disk, so
+        // so.exists() is false and injection silently no-ops on a clone that otherwise works.
+        jniLibs {
+            useLegacyPackaging = true
+            excludes.add("**/libandroidx.graphics.path.so")
+        }
+        resources {
+            excludes.add("**/libandroidx.graphics.path.so")
+        }
+    }
+    applicationVariants.configureEach { variant ->
+        variant.outputs.configureEach { output ->
+            output.outputFileName = "NextGen_${variant.versionName}_${output.baseName}.apk"
+        }
+    }
+}
+
+// The management UI is gone; the launcher is native. What is left needs only AppCompat (the
+// login WebView activities), Material (the one remaining theme parent) and the engine.
+dependencies {
+    implementation project(':Bcore')
+
+    implementation libs.appcompat
+    implementation libs.material
+    // GameActivity (AGDK) — hosts the native Rust/egui UI (libloader.so) in MainActivity.
+    implementation 'androidx.games:games-activity:4.4.0'
+}

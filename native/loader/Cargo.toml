@@ -1,0 +1,58 @@
+[package]
+name = "loader"
+version = "0.1.0"
+edition = "2021"
+resolver = "2"
+
+[lib]
+name = "loader"
+crate-type = ["cdylib"]
+
+# Versions pinned to the known-good agdk-eframe reference (GameActivity + wgpu).
+[dependencies]
+egui = "=0.33.3"
+eframe = { version = "=0.33.3", features = ["wgpu", "android-game-activity"] }
+# Remote image loading for app icons (async fetch + texture cache via `egui::Image::new(url)`).
+# `http` pulls ehttp→ureq (rustls + bundled webpki-roots, so no system cert store needed);
+# `image` pulls the decoders (Play-Store icons are WebP/PNG).
+egui_extras = { version = "=0.33.3", default-features = false, features = ["image", "http"] }
+# egui_extras' "image" feature pulls the `image` crate but enables NO decoders — declare
+# them here. Play-Store CDN icons are WebP (the `=…-rw` URLs), sometimes PNG/JPEG.
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+winit = { version = "=0.30.13", features = ["android-game-activity"] }
+wgpu = "=27.0.1"
+log = "0.4"
+android_logger = "0.14"
+# Rust-side compile-time literal obfuscation (the Rust twin of C++ OBS()/Obfuscate;
+# see src/obs.rs). Always on — sensitive Rust literals should never ship in plaintext.
+obfstr = "0.4"
+
+# JNI — Android-only, NON-optional: needed in the DEFAULT build for the onboarding
+# All-Files-Access permission flow + open-url (plain Android APIs, no Bcore). Pinned to
+# 0.21 to match the overlay idioms; coexists with android-activity's transitive 0.22.4
+# since we build our own JavaVM from the ndk_context raw pointer. (The `real_engine`
+# NextGenCore bridge uses the same jni.)
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+ndk-context = "0.1"
+
+[features]
+# Default runs entirely on fake data (LocalFake + FakeEngine) — buildable + runnable
+# on-device today with no server and no Bcore wiring.
+default = ["fake"]
+fake = []
+# Flip on once Bcore + the Java floor are wired (M2a): compiles the JNI RealEngine.
+real_engine = []
+# Remote DataSource lands in M5 (ureq/rustls). Stub only for now.
+remote = []
+
+# The plugin framework (native C++ registry + plugins under plugins/) is ALWAYS
+# compiled via cc — it is the app's extension seam, not an opt-in island. Which
+# plugins are active is chosen by hand in plugins/register.cpp.
+[build-dependencies]
+cc = "1.1"
+
+[profile.release]
+# Keep it lean but debuggable enough for ndk-stack.
+opt-level = "s"
+lto = true

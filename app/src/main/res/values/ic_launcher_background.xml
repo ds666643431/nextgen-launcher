@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches nextgen1.png background. Mostly hidden (the adaptive foreground is
+         full-bleed on this same tone); shown only during launcher parallax/animation. -->
+    <color name="ic_launcher_background">#EFF2F6</color>
+</resources>
