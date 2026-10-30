@@ -47,14 +47,27 @@ jobs:
           cargo --version
           cargo ndk --version
 
+      - name: Verify NDK
+        run: |
+          echo "NDK_HOME=$NDK_HOME"
+          ls "$NDK_HOME" || true
+          ls "$NDK_HOME/toolchains" || true
+          find "$SDK_ROOT/ndk" -maxdepth 2 -name 'source.properties' 2>/dev/null | head
+          echo "ANDROID_NDK_HOME=$NDK_HOME" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$NDK_HOME" >> $GITHUB_ENV
+
       - name: Build libloader.so (Rust, ZH)
         working-directory: native/loader
+        env:
+          ANDROID_NDK_HOME: ${{ env.NDK_HOME }}
+          ANDROID_NDK_ROOT: ${{ env.NDK_HOME }}
         run: |
           source "$HOME/.cargo/env"
-          export ANDROID_NDK_HOME="$NDK_HOME"
-          cargo ndk -t arm64-v8a -p 28 -o ../vendor/NextGEN/app/src/main/jniLibs build --release 2>&1 | tail -40
+          echo "NDK check: $ANDROID_NDK_HOME"
+          ls "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin" | head -5
+          cargo ndk --platform 28 --target arm64-v8a --output-dir ../vendor/NextGEN/app/src/main/jniLibs build --release 2>&1 | tail -60
           echo "--- produced ---"
-          ls -la ../vendor/NextGEN/app/src/main/jniLibs/arm64-v8a/
+          ls -la ../vendor/NextGEN/app/src/main/jniLibs/arm64-v8a/ || true
 
       - name: Write local.properties
         run: |
