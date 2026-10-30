@@ -40,6 +40,7 @@ fn dark_logo_image() -> egui::ColorImage {
 pub enum Lang {
     En,
     Vi,
+    Zh,
 }
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ThemeChoice {
@@ -142,7 +143,7 @@ impl App {
             installed: HashSet::new(),
             device_pkgs: HashSet::new(),
             device_known: false,
-            lang: Lang::En,
+            lang: Lang::Zh,
             theme_choice: ThemeChoice::Light,
             google_account: None,
             facebook_linked: false,
