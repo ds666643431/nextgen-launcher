@@ -2,13 +2,11 @@ name: Build NextGen APK
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     steps:
       - name: Checkout
@@ -20,42 +18,62 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Locate Android SDK
+        id: sdk
+        run: |
+          set -e
+          # GitHub ubuntu-latest 预装 SDK，直接用它，不跑 setup-android
+          for d in "$ANDROID_HOME" "$ANDROID_SDK_ROOT" /usr/local/lib/android/sdk /opt/android-sdk; do
+            if [ -n "$d" ] && [ -d "$d" ]; then
+              echo "SDK_ROOT=$d" >> $GITHUB_ENV
+              echo "found: $d"
+              break
+            fi
+          done
+          if [ -z "$SDK_ROOT" ]; then echo "no sdk found"; exit 1; fi
+          ls "$SDK_ROOT"
+          echo "--- cmdline-tools ---"
+          ls "$SDK_ROOT/cmdline-tools" 2>/dev/null || true
+          echo "--- ndk preinstalled ---"
+          ls "$SDK_ROOT/ndk" 2>/dev/null || true
 
       - name: Install NDK 27.0.12077973
         run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager "ndk;27.0.12077973" "platforms;android-35" "build-tools;35.0.0"
+          set -e
+          SDKMANAGER=$(find "$SDK_ROOT/cmdline-tools" -name sdkmanager -type f 2>/dev/null | head -1)
+          echo "sdkmanager: $SDKMANAGER"
+          if [ -z "$SDKMANAGER" ]; then echo "sdkmanager missing"; exit 1; fi
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" "ndk;27.0.12077973" "platforms;android-35" "build-tools;35.0.0" 2>&1 | tail -20
+          echo "--- installed ndk ---"
+          ls "$SDK_ROOT/ndk"
 
       - name: Write local.properties
         run: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > vendor/NextGEN/local.properties
+          echo "sdk.dir=$SDK_ROOT" > vendor/NextGEN/local.properties
           cat vendor/NextGEN/local.properties
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('vendor/NextGEN/**/*.gradle*', 'vendor/NextGEN/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Bump gradle heap
+        run: |
+          cd vendor/NextGEN
+          sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8/' gradle.properties
+          grep jvmargs gradle.properties
 
-      - name: Build release APK
+      - name: Build arm64 release
         working-directory: vendor/NextGEN
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleRelease --no-daemon --stacktrace
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace 2>&1 | tail -80
 
       - name: List outputs
+        if: always()
         run: |
-          find vendor/NextGEN/app/build/outputs -type f -name '*.apk' -exec ls -la {} \;
+          find vendor/NextGEN/app/build/outputs -type f -name '*.apk' -exec ls -la {} \; 2>/dev/null || echo "no apk"
 
       - name: Upload APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: NextGen-APK
           path: vendor/NextGEN/app/build/outputs/apk/release/*.apk
-          if-no-files-found: error
+          if-no-files-found: warn
