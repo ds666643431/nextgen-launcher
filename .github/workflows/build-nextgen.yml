@@ -65,9 +65,13 @@ jobs:
           source "$HOME/.cargo/env"
           echo "NDK check: $ANDROID_NDK_HOME"
           ls "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin" | head -5
-          cargo ndk --platform 28 --target arm64-v8a --output-dir ../vendor/NextGEN/app/src/main/jniLibs build --release 2>&1 | tail -60
+          OUT="$GITHUB_WORKSPACE/vendor/NextGEN/app/src/main/jniLibs"
+          echo "OUT=$OUT"
+          cargo ndk --platform 28 --target arm64-v8a --output-dir "$OUT" build --release 2>&1 | tail -60
+          echo "--- verify copy ---"
+          ls -la "$OUT/arm64-v8a/" || true
           echo "--- produced ---"
-          ls -la ../vendor/NextGEN/app/src/main/jniLibs/arm64-v8a/ || true
+          ls -la "$GITHUB_WORKSPACE/vendor/NextGEN/app/src/main/jniLibs/arm64-v8a/" || true
 
       - name: Write local.properties
         run: |
