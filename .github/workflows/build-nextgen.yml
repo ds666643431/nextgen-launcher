@@ -1,4 +1,4 @@
-name: Build NextGen APK
+name: Build NextGen APK (ZH)
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
 
     steps:
       - name: Checkout
@@ -26,23 +26,35 @@ jobs:
           done
           if [ -z "$FOUND" ]; then echo "no sdk found"; exit 1; fi
           echo "SDK_ROOT=$FOUND" >> $GITHUB_ENV
+          echo "NDK_HOME=$FOUND/ndk/27.0.12077973" >> $GITHUB_ENV
           echo "FOUND=$FOUND"
           ls "$FOUND"
-          echo "--- cmdline-tools ---"
-          ls "$FOUND/cmdline-tools" 2>/dev/null || true
-          echo "--- ndk ---"
-          ls "$FOUND/ndk" 2>/dev/null || true
 
       - name: Install NDK 27.0.12077973
         run: |
-          set -e
           SDKMANAGER=$(find "$SDK_ROOT/cmdline-tools" -name sdkmanager -type f 2>/dev/null | head -1)
-          echo "sdkmanager: $SDKMANAGER"
-          if [ -z "$SDKMANAGER" ]; then echo "sdkmanager missing"; exit 1; fi
           yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
-          "$SDKMANAGER" "ndk;27.0.12077973" "platforms;android-35" "build-tools;35.0.0" 2>&1 | tail -20
-          echo "--- installed ndk ---"
+          "$SDKMANAGER" "ndk;27.0.12077973" "platforms;android-35" "build-tools;35.0.0" 2>&1 | tail -10
           ls "$SDK_ROOT/ndk"
+
+      - name: Install Rust + cargo-ndk
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+          source "$HOME/.cargo/env"
+          rustup target add aarch64-linux-android
+          cargo install cargo-ndk --locked
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          cargo --version
+          cargo ndk --version
+
+      - name: Build libloader.so (Rust, ZH)
+        working-directory: native/loader
+        run: |
+          source "$HOME/.cargo/env"
+          export ANDROID_NDK_HOME="$NDK_HOME"
+          cargo ndk -t arm64-v8a -p 28 -o ../vendor/NextGEN/app/src/main/jniLibs build --release 2>&1 | tail -40
+          echo "--- produced ---"
+          ls -la ../vendor/NextGEN/app/src/main/jniLibs/arm64-v8a/
 
       - name: Write local.properties
         run: |
@@ -59,7 +71,7 @@ jobs:
         working-directory: vendor/NextGEN
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleRelease --no-daemon --stacktrace 2>&1 | tail -80
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace 2>&1 | tail -100
 
       - name: List outputs
         if: always()
@@ -70,6 +82,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: NextGen-APK
+          name: NextGen-ZH-APK
           path: vendor/NextGEN/app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
