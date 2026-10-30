@@ -334,6 +334,10 @@ pub fn render(app: &mut App, ctx: &egui::Context) -> Action {
                 if radio_row(ui, "TIẾNG VIỆT", "VI", lang == Lang::Vi) {
                     action = Action::SetLang(Lang::Vi);
                 }
+                ui.add_space(4.0);
+                if radio_row(ui, "简体中文", "ZH", lang == Lang::Zh) {
+                    action = Action::SetLang(Lang::Zh);
+                }
                 ui.add_space(24.0);
             });
         });
