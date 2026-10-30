@@ -19,23 +19,19 @@ jobs:
           java-version: '21'
 
       - name: Locate Android SDK
-        id: sdk
         run: |
-          set -e
-          # GitHub ubuntu-latest 预装 SDK，直接用它，不跑 setup-android
+          FOUND=""
           for d in "$ANDROID_HOME" "$ANDROID_SDK_ROOT" /usr/local/lib/android/sdk /opt/android-sdk; do
-            if [ -n "$d" ] && [ -d "$d" ]; then
-              echo "SDK_ROOT=$d" >> $GITHUB_ENV
-              echo "found: $d"
-              break
-            fi
+            if [ -n "$d" ] && [ -d "$d" ]; then FOUND="$d"; break; fi
           done
-          if [ -z "$SDK_ROOT" ]; then echo "no sdk found"; exit 1; fi
-          ls "$SDK_ROOT"
+          if [ -z "$FOUND" ]; then echo "no sdk found"; exit 1; fi
+          echo "SDK_ROOT=$FOUND" >> $GITHUB_ENV
+          echo "FOUND=$FOUND"
+          ls "$FOUND"
           echo "--- cmdline-tools ---"
-          ls "$SDK_ROOT/cmdline-tools" 2>/dev/null || true
-          echo "--- ndk preinstalled ---"
-          ls "$SDK_ROOT/ndk" 2>/dev/null || true
+          ls "$FOUND/cmdline-tools" 2>/dev/null || true
+          echo "--- ndk ---"
+          ls "$FOUND/ndk" 2>/dev/null || true
 
       - name: Install NDK 27.0.12077973
         run: |
